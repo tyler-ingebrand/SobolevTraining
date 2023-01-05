@@ -29,8 +29,8 @@ ys = function(xs)
 
 
 # create nns
-trained_nns =[train_nn(xs, ys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid) for i in range(number_nns)]
-trained_nns2 =[train_nn_first_order(xs, ys, dys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid)for i in range(number_nns)]
+trained_nns =[train_nn(xs, ys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid)[0] for i in range(number_nns)]
+trained_nns2 =[train_nn_first_order(xs, ys, dys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid)[0] for i in range(number_nns)]
 
 # show output - plot
 xs_dense = torch.linspace(low, high, 100).reshape(-1, 1).to(device)

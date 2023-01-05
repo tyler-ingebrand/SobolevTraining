@@ -17,8 +17,7 @@ function = lambda x: torch.sin(2 * torch.pi * x)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(1)
 
-trained_nn = None
-trained_nn2 = None
+trained_nn,trained_nn2,opt,opt2 = None, None, None, None
 xs_dense = torch.linspace(low, high, 100).reshape(-1, 1).to(device)
 
 for i in range(number_training_graphs):
@@ -33,8 +32,8 @@ for i in range(number_training_graphs):
     ys = function(xs)
 
     # create nns
-    trained_nn = train_nn(xs, ys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid, model=trained_nn)
-    trained_nn2 = train_nn_first_order(xs, ys, dys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid, model=trained_nn2)
+    trained_nn, opt = train_nn(xs, ys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid, model=trained_nn, opt=opt)
+    trained_nn2, opt2 = train_nn_first_order(xs, ys, dys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid, model=trained_nn2, opt=opt2)
 
     # show output - plot
     ys_dense = trained_nn(xs_dense)
