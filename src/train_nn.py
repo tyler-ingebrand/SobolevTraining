@@ -5,7 +5,8 @@ from tqdm import trange
 # inputs expcted to be batchsize x input size,
 # outputs expected to be batchsize x outputsize
 def train_nn(inputs:torch.tensor, outputs:torch.tensor,
-             maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU):
+             maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU,
+             model=None):
 
     assert len(inputs.shape) == 2 and len(outputs.shape) == 2, "Inputs and outputs must have 2 dimensions each"
     assert inputs.shape[0] == outputs.shape[0], "Input batch size must match output batch size"
@@ -17,7 +18,8 @@ def train_nn(inputs:torch.tensor, outputs:torch.tensor,
 
     # create NN
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = nn.Sequential(nn.Linear(input_size, 64), activation_function(),
+    if model is None:
+        model = nn.Sequential(nn.Linear(input_size, 64), activation_function(),
                           nn.Linear(64, 64), activation_function(),
                           nn.Linear(64, output_size)).to(device)
     optimizer = torch.optim.Adam(model.parameters())
@@ -37,7 +39,8 @@ def train_nn(inputs:torch.tensor, outputs:torch.tensor,
 # inputs expcted to be batchsize x input size,
 # outputs expected to be batchsize x outputsize
 def train_nn_first_order(inputs:torch.tensor, outputs:torch.tensor, gradients:torch.tensor,
-                        maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU):
+                        maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU,
+                         model=None):
 
     assert len(inputs.shape) == 2 and len(outputs.shape) == 2 and len(gradients.shape) == 2, "Inputs and outputs must have 2 dimensions each"
     assert inputs.shape[0] == outputs.shape[0] == gradients.shape[0], "Input batch size must match output batch size"
@@ -49,17 +52,13 @@ def train_nn_first_order(inputs:torch.tensor, outputs:torch.tensor, gradients:to
 
     # create NN
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = nn.Sequential(nn.Linear(input_size, 64), activation_function(),
+    if model is None:
+        model = nn.Sequential(nn.Linear(input_size, 64), activation_function(),
                           nn.Linear(64, 64), activation_function(),
                           nn.Linear(64, output_size)).to(device)
     optimizer = torch.optim.Adam(model.parameters())
     loss_function1 = nn.MSELoss()
     loss_function2 = nn.MSELoss()
-
-    # todo
-    loss1 = None
-    loss2 = None
-
 
     # optimize
     for i in trange(maximum_gradient_steps):

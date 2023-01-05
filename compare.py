@@ -8,7 +8,7 @@ have_legend = True
 
 # data paramaters
 low, high = 0, 1
-number_data_points = 6
+number_data_points = 5
 # function = lambda x: torch.sin(2 * torch.pi * x)
 # function = lambda x: torch.exp(x)
 # function = lambda x: torch.sin(x) * torch.cos(x)
