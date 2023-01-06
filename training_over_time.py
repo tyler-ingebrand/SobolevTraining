@@ -1,10 +1,11 @@
-from src.train_nn import train_nn, train_nn_first_order
+from src.train_nn import train_nn, train_nn_first_order, create_data
 import torch
 import matplotlib.pyplot as plt
 
 # training parameters
 have_legend = True
 number_training_graphs = 10
+torch.manual_seed(1)
 
 # data paramaters
 low, high = 0, 1
@@ -15,21 +16,14 @@ function = lambda x: torch.sin(2 * torch.pi * x)
 # function = lambda x: -(x-0.5)**3 + (x-0.5)**2
 # function = lambda x: -64*(x-0.5)**4 + 16*(x-0.5)**2
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-torch.manual_seed(1)
 
 trained_nn,trained_nn2,opt,opt2 = None, None, None, None
-xs_dense = torch.linspace(low, high, 100).reshape(-1, 1).to(device)
+xs_dense, ys_dense, dys = create_data(function, 100, low=low, high=high, uniform=True)
+plt.plot(xs_dense.detach().cpu(), function(xs_dense.detach().cpu()), color='black', label="True function")
 
 for i in range(number_training_graphs):
     # generate training data
-    xs = torch.rand((number_data_points, 1)).to(device).requires_grad_(True)
-    ys = function(xs)
-    ys.backward(torch.ones_like(xs))
-    dys = torch.clone(xs.grad).detach()
-
-    # recreate without grads
-    xs = xs.detach()
-    ys = function(xs)
+    xs, ys, dys = create_data(function, number_data_points, low=low, high=high, uniform=False)
 
     # create nns
     trained_nn, opt = train_nn(xs, ys, maximum_gradient_steps=100_000, minimum_loss=0.000001, activation_function=torch.nn.Sigmoid, model=trained_nn, opt=opt)
@@ -44,7 +38,6 @@ for i in range(number_training_graphs):
     label = "0th + 1st order approximation (Sobolev)" if i == 0 else None
     plt.plot(xs_dense.detach().cpu(), ys_dense2.detach().cpu(), color='b', alpha=0.1 + i*0.1, label=label)
 
-plt.plot(xs_dense.detach().cpu(), function(xs_dense.detach().cpu()), color='black', label="True function")
 if have_legend: plt.legend()
 plt.title("Comparing NN training methods under low data conditions (N={})".format(number_data_points))
 plt.show()

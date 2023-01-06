@@ -6,7 +6,7 @@ from tqdm import trange
 # outputs expected to be batchsize x outputsize
 def train_nn(inputs:torch.tensor, outputs:torch.tensor,
              maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU,
-             model=None, opt=None):
+             model=None, opt=None, progress_bar=True):
 
     assert len(inputs.shape) == 2 and len(outputs.shape) == 2, "Inputs and outputs must have 2 dimensions each"
     assert inputs.shape[0] == outputs.shape[0], "Input batch size must match output batch size"
@@ -27,7 +27,8 @@ def train_nn(inputs:torch.tensor, outputs:torch.tensor,
     loss_function = nn.MSELoss()
 
     # optimize
-    for i in trange(maximum_gradient_steps):
+    r = trange(maximum_gradient_steps) if progress_bar else range(maximum_gradient_steps)
+    for i in r:
         opt.zero_grad()
         loss = loss_function(model(inputs), outputs)
         loss.backward()
@@ -41,7 +42,7 @@ def train_nn(inputs:torch.tensor, outputs:torch.tensor,
 # outputs expected to be batchsize x outputsize
 def train_nn_first_order(inputs:torch.tensor, outputs:torch.tensor, gradients:torch.tensor,
                         maximum_gradient_steps, minimum_loss, activation_function=nn.ReLU,
-                         model=None, opt=None):
+                         model=None, opt=None, progress_bar=True):
 
     assert len(inputs.shape) == 2 and len(outputs.shape) == 2 and len(gradients.shape) == 2, "Inputs and outputs must have 2 dimensions each"
     assert inputs.shape[0] == outputs.shape[0] == gradients.shape[0], "Input batch size must match output batch size"
@@ -63,13 +64,13 @@ def train_nn_first_order(inputs:torch.tensor, outputs:torch.tensor, gradients:to
     loss_function2 = nn.MSELoss()
 
     # optimize
-    for i in trange(maximum_gradient_steps):
+    r = trange(maximum_gradient_steps) if progress_bar else range(maximum_gradient_steps)
+    for i in r:
         # compute gradient based loss function
-        inputs.grad = None
-        inputs.requires_grad_(True)
+        #inputs.grad = None
+        #inputs.requires_grad_(True)
         y_hats = model(inputs)
-        y_hats.backward(torch.ones_like(inputs), create_graph=True)
-        dy_hats = inputs.grad
+        dy_hats = torch.autograd.grad(y_hats, inputs, torch.ones_like(y_hats), create_graph=True)[0] # [0] because we only have 1 input and it returns a tuple
 
         opt.zero_grad() # remove current gradients we used to calculate dy_hats. We will compute gradients for loss next
 
@@ -84,11 +85,24 @@ def train_nn_first_order(inputs:torch.tensor, outputs:torch.tensor, gradients:to
         # step optimizer
         opt.step()
 
-        # clean up so we dont create memory leak with torch
-        for p in model.parameters():
-            p.grad = None
-
         if loss1 +  loss2 < minimum_loss:
              break
 
     return model, opt
+
+def create_data(function, number_points, low=0.0, high=1.0, uniform=True, device=None):
+    if device is None:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Generate xs
+    if uniform:
+        xs = torch.linspace(low, high, number_points).reshape(-1, 1).to(device).requires_grad_(True)
+    else:
+        xs = ((high - low) * torch.rand(number_points, 1) + low).to(device).requires_grad_(True)
+
+    # compute ys and dys/dxs
+    ys = function(xs)
+    dys = torch.autograd.grad(ys, xs, torch.ones_like(ys))
+    ys = ys.detach()
+    dys = dys[0].detach()
+    return xs, ys, dys
