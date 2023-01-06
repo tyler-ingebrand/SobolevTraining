@@ -8,3 +8,14 @@ is more limited. See the below images for examples of training 10 NNs for both t
 ![image](https://user-images.githubusercontent.com/105821676/210645189-b8f915f7-d185-4743-b8fc-cc59827e42ca.png)
 
 ![image](https://user-images.githubusercontent.com/105821676/210646428-05c578aa-1fb5-4df6-951e-a9a301ed9e66.png)
+
+Additionally, we can render different approximations throughout training. The following video shows typical batched supervised training, where the batch is not large enough to represent the entire range of inputs. This is quite common, especially as the number of inputs increases. Imagine how large a batch would have to be for input data with 100s, 1,000s, or 1,000,000s of inputs. Therefore, I expect this is a frequent occurence in real life applications.
+
+The normal training method is noticably jittery during training. It takes far longer to converge, and occasionally "forgets" a part of the function which is not represented in the current batch. In contrast, Sobolev training is noticably less jittery and converges quickly to the true function. 
+
+
+
+
+
+https://user-images.githubusercontent.com/105821676/211069288-81b00e17-8f95-4f34-8464-88769382fcdc.mp4
+
